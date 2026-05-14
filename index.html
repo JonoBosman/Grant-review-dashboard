@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Host Your Website Free with Netlify</title>
+
+  <!-- Google Fonts: Syne (display) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS CUSTOM PROPERTIES (Theme Variables)
+       Makes dark/light mode switching easy!
+    ============================================================ */
+    :root {
+      --bg:          #f0f4ff;
+      --bg-card:     #ffffff;
+      --bg-glass:    rgba(255,255,255,0.7);
+      --bg-code:     #eef2ff;
+      --text:        #0f172a;
+      --text-muted:  #64748b;
+      --accent:      #3b6ef5;
+      --accent-2:    #6d8ff7;
+      --accent-glow: rgba(59,110,245,0.18);
+      --border:      rgba(59,110,245,0.13);
+      --shadow:      0 4px 32px rgba(59,110,245,0.09);
+      --shadow-lg:   0 12px 48px rgba(59,110,245,0.15);
+      --radius:      18px;
+      --radius-sm:   10px;
+      --nav-h:       68px;
+      --transition:  0.32s cubic-bezier(.4,0,.2,1);
+    }
+
+    [data-theme="dark"] {
+      --bg:          #0c1120;
+      --bg-card:     #131d35;
+      --bg-glass:    rgba(19,29,53,0.82);
+      --bg-code:     #1a2540;
+      --text:        #e8eeff;
+      --text-muted:  #8899bb;
+      --accent:      #5b86f8;
+      --accent-2:    #88a8fa;
+      --accent-glow: rgba(91,134,248,0.22);
+      --border:      rgba(91,134,248,0.18);
+      --shadow:      0 4px 32px rgba(0,0,0,0.35);
+      --shadow-lg:   0 12px 48px rgba(0,0,0,0.5);
+    }
+
+    /* ============================================================
+       RESET & BASE STYLES
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background var(--transition), color var(--transition);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Syne', sans-serif; line-height: 1.15; }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    img { max-width: 100%; display: block; }
+
+    /* ============================================================
+       SCROLL PROGRESS BAR
+    ============================================================ */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      z-index: 9999;
+      transition: width 0.1s linear;
+    }
+
+    /* ============================================================
+       NAVIGATION
+    ============================================================ */
+    nav {
+      position: sticky;
+      top: 0;
+      height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      padding: 0 clamp(1rem, 5vw, 3rem);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: var(--bg-glass);
+      border-bottom: 1px solid var(--border);
+      z-index: 1000;
+      gap: 1.5rem;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .nav-logo span { color: var(--text); }
+
+    .nav-links {
+      display: flex;
+      gap: 0.25rem;
+      list-style: none;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    .nav-links a {
+      display: block;
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color var(--transition), background var(--transition);
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--accent);
+      background: var(--accent-glow);
+      text-decoration: none;
+    }
+
+    /* Dark mode toggle */
+    #theme-toggle {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      width: 46px;
+      height: 26px;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background var(--transition);
+    }
+
+    #theme-toggle::after {
+      content: '';
+      position: absolute;
+      left: 3px; top: 3px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      transition: transform var(--transition), background var(--transition);
+    }
+
+    [data-theme="dark"] #theme-toggle::after {
+      transform: translateX(20px);
+    }
+
+    /* Hamburger */
+    #hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 6px;
+      margin-left: auto;
+      background: none;
+      border: none;
+    }
+
+    #hamburger span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: transform var(--transition), opacity var(--transition);
+    }
+
+    #hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    #hamburger.open span:nth-child(2) { opacity: 0; }
+    #hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* Mobile nav drawer */
+    #mobile-nav {
+      display: none;
+      position: fixed;
+      top: var(--nav-h);
+      left: 0; right: 0;
+      background: var(--bg-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      z-index: 999;
+      padding: 1rem 1.5rem 1.5rem;
+      transform: translateY(-110%);
+      transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+    }
+
+    #mobile-nav.open { transform: translateY(0); }
+
+    #mobile-nav ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    #mobile-nav a {
+      display: block;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+      color: var(--text);
+      font-size: 1.05rem;
+    }
+
+    #mobile-nav a:hover { background: var(--accent-glow); color: var(--accent); text-decoration: none; }
+
+    /* ============================================================
+       LAYOUT HELPERS
+    ============================================================ */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 clamp(1rem, 5vw, 2.5rem);
+    }
+
+    section { padding: clamp(4rem, 8vw, 7rem) 0; }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      background: var(--accent-glow);
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+
+    .section-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    /* ============================================================
+       SCROLL REVEAL ANIMATION
+    ============================================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Stagger child reveals */
+    .reveal-stagger > * {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal-stagger.visible > *:nth-child(1) { opacity:1; transform:translateY(0); transition-delay: 0s; }
+    .reveal-stagger.visible > *:nth-child(2) { opacity:1; transform:translateY(0); transition-delay: 0.1s; }
+    .reveal-stagger.visible > *:nth-child(3) { opacity:1; transform:translateY(0); transition-delay: 0.2s; }
+    .reveal-stagger.visible > *:nth-child(4) { opacity:1; transform:translateY(0); transition-delay: 0.3s; }
+    .reveal-stagger.visible > *:nth-child(5) { opacity:1; transform:translateY(0); transition-delay: 0.4s; }
+    .reveal-stagger.visible > *:nth-child(6) { opacity:1; transform:translateY(0); transition-delay: 0.5s; }
+
+    /* ============================================================
+       HERO SECTION
+    ============================================================ */
+    #hero {
+      min-height: 92vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: clamp(3rem, 10vw, 6rem) 0;
+    }
+
+    /* Animated background blobs */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.35;
+      animation: floatBlob 8s ease-in-out infinite;
+    }
+
+    .blob-1 {
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, #3b6ef5 0%, transparent 70%);
+      top: -120px; right: -100px;
+    }
+
+    .blob-2 {
+      width: 360px; height: 360px;
+      background: radial-gradient(circle, #6d8ff7 0%, transparent 70%);
+      bottom: -80px; left: -80px;
+      animation-delay: -3s;
+    }
+
+    .blob-3 {
+      width: 240px; height: 240px;
+      background: radial-gradient(circle, #a5b8fd 0%, transparent 70%);
+      top: 40%; left: 40%;
+      animation-delay: -5s;
+    }
+
+    @keyframes floatBlob {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%       { transform: translate(20px, -30px) scale(1.05); }
+      66%       { transform: translate(-15px, 20px) scale(0.97); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.4rem 1rem 0.4rem 0.6rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.75rem;
+      backdrop-filter: blur(8px);
+      animation: fadeSlideUp 0.8s ease both;
+    }
+
+    .hero-badge .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.25);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.25); }
+      50%       { box-shadow: 0 0 0 7px rgba(34,197,94,0.1); }
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-title {
+      font-size: clamp(2.4rem, 7vw, 4.4rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.08;
+      margin-bottom: 1.25rem;
+      animation: fadeSlideUp 0.9s 0.15s ease both;
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--text-muted);
+      max-width: 540px;
+      line-height: 1.75;
+      margin-bottom: 2.25rem;
+      animation: fadeSlideUp 0.9s 0.28s ease both;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      animation: fadeSlideUp 0.9s 0.4s ease both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.75rem;
+      border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: #fff;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px var(--accent-glow);
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    /* ============================================================
+       FEATURE CARDS (Why Netlify)
+    ============================================================ */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem 1.5rem;
+      box-shadow: var(--shadow);
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-2);
+    }
+
+    .card-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: var(--accent-glow);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* ============================================================
+       CHECKLIST (What You Need)
+    ============================================================ */
+    .checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      max-width: 500px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow);
+      animation: checkSlide 0.4s ease both;
+    }
+
+    @keyframes checkSlide {
+      from { opacity:0; transform: translateX(-16px); }
+      to   { opacity:1; transform: translateX(0); }
+    }
+
+    .check-icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .check-item p { font-weight: 500; font-size: 0.95rem; }
+    .check-item small { color: var(--text-muted); font-size: 0.82rem; }
+
+    /* ============================================================
+       TUTORIAL STEPS
+    ============================================================ */
+    #tutorial { background: var(--bg); }
+
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      counter-reset: steps;
+    }
+
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 2rem 2rem 1.5rem;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 1.5rem;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      border-radius: 4px 0 0 4px;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .step-card:hover {
+      transform: translateX(6px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-2);
+    }
+
+    .step-card:hover::before { opacity: 1; }
+
+    .step-badge {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    .step-icon-emoji {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .step-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .step-desc {
+      font-size: 0.93rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* Code block with copy button */
+    .code-block {
+      position: relative;
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: var(--accent);
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.7;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    .copy-btn.copied {
+      color: #22c55e;
+      border-color: #22c55e;
+    }
+
+    /* URL chip for step 5 */
+    .live-url {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 100%);
+      border: 1px solid var(--accent-2);
+      border-radius: 999px;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--accent);
+      margin-top: 0.75rem;
+    }
+
+    /* ============================================================
+       ACCORDION (Mistakes & FAQ)
+    ============================================================ */
+    .accordion { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .accordion-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: border-color var(--transition);
+    }
+
+    .accordion-item:hover { border-color: var(--accent-2); }
+
+    .accordion-trigger {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.15rem 1.5rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.97rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: left;
+      transition: color var(--transition);
+    }
+
+    .accordion-trigger:hover { color: var(--accent); }
+
+    .accordion-trigger .icon-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .accordion-trigger .warn-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: rgba(251,146,60,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    .accordion-trigger .faq-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    .accordion-chevron {
+      width: 20px; height: 20px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: transform var(--transition);
+    }
+
+    .accordion-item.open .accordion-chevron { transform: rotate(180deg); }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.45s cubic-bezier(.4,0,.2,1), padding 0.3s ease;
+    }
+
+    .accordion-body-inner {
+      padding: 0 1.5rem 1.25rem;
+      font-size: 0.93rem;
+      color: var(--text-muted);
+      line-height: 1.75;
+    }
+
+    /* ============================================================
+       SUCCESS / FINAL CTA
+    ============================================================ */
+    #final {
+      background: linear-gradient(145deg, var(--accent) 0%, #6d8ff7 50%, #a5b8fd 100%);
+      color: #fff;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #final::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .success-card {
+      position: relative;
+      z-index: 2;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .success-checkmark {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      border: 2px solid rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 1.5rem;
+      animation: successPop 0.8s cubic-bezier(.175,.885,.32,1.275) both;
+    }
+
+    @keyframes successPop {
+      from { transform: scale(0) rotate(-15deg); opacity:0; }
+      to   { transform: scale(1) rotate(0deg); opacity:1; }
+    }
+
+    #final .section-title { color: #fff; font-size: clamp(2rem, 5vw, 3rem); }
+    #final .section-sub   { color: rgba(255,255,255,0.82); margin: 0 auto 2rem; }
+
+    .btn-white {
+      background: #fff;
+      color: var(--accent);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    }
+
+    .btn-white:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+      text-decoration: none;
+      color: var(--accent);
+    }
+
+    /* Confetti particles */
+    .confetti-wrap {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .confetti-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      animation: confettiFall linear infinite;
+      opacity: 0.6;
+    }
+
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 0.8; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 3rem 0 2rem;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .footer-brand p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 0.65rem;
+      line-height: 1.7;
+      max-width: 260px;
+    }
+
+    .footer-col h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.85rem;
+    }
+
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .footer-col a {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      transition: color var(--transition);
+    }
+
+    .footer-col a:hover { color: var(--accent); text-decoration: none; }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.83rem;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      #hamburger { display: flex; }
+      #mobile-nav { display: block; }
+      #theme-toggle { margin-left: 0; }
+
+      .hero-title { font-size: 2.4rem; }
+
+      .step-card {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .footer-bottom { flex-direction: column; gap: 0.5rem; text-align: center; }
+    }
+
+    @media (max-width: 500px) {
+      .hero-title { font-size: 2rem; }
+      .hero-ctas { flex-direction: column; }
+      .btn { justify-content: center; }
+    }
+
+    /* ============================================================
+       UTILITY
+    ============================================================ */
+    .text-center { text-align: center; }
+    .mt-1  { margin-top: 0.5rem; }
+    .mt-2  { margin-top: 1rem; }
+    .mt-3  { margin-top: 1.5rem; }
+    .mb-1  { margin-bottom: 0.5rem; }
+    .mb-2  { margin-bottom: 1rem; }
+    .mb-3  { margin-bottom: 1.5rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 2rem 0;
+    }
+
+    /* Visually hidden for accessibility */
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       SCROLL PROGRESS BAR
+  ============================================================ -->
+  <div id="progress-bar" role="progressbar" aria-label="Page scroll progress"></div>
+
+  <!-- ============================================================
+       NAVIGATION
+  ============================================================ -->
+  <nav role="navigation" aria-label="Main navigation">
+    <a href="#" class="nav-logo" aria-label="Home">Net<span>Guide</span></a>
+
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#why">Why Netlify</a></li>
+      <li><a href="#needs">What You Need</a></li>
+      <li><a href="#tutorial">Tutorial</a></li>
+      <li><a href="#mistakes">Mistakes</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+
+    <!-- Dark mode toggle -->
+    <button id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode"></button>
+
+    <!-- Hamburger for mobile -->
+    <button id="hamburger" aria-label="Open mobile menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- Mobile navigation drawer -->
+  <div id="mobile-nav" role="navigation" aria-label="Mobile navigation">
+    <ul>
+      <li><a href="#why">Why Netlify</a></li>
+      <li><a href="#needs">What You Need</a></li>
+      <li><a href="#tutorial">Tutorial</a></li>
+      <li><a href="#mistakes">Common Mistakes</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+  </div>
+
+  <!-- ============================================================
+       HERO SECTION
+  ============================================================ -->
+  <section id="hero" aria-label="Introduction">
+    <!-- Animated background blobs -->
+    <div class="blob blob-1" aria-hidden="true"></div>
+    <div class="blob blob-2" aria-hidden="true"></div>
+    <div class="blob blob-3" aria-hidden="true"></div>
+
+    <div class="container">
+      <div class="hero-content">
+        <!-- Live badge -->
+        <div class="hero-badge">
+          <span class="dot"></span>
+          Free forever on Netlify's Starter plan
+        </div>
+
+        <!-- Main headline -->
+        <h1 class="hero-title">
+          Host Your HTML Website<br />
+          <span class="highlight">Free with Netlify</span>
+        </h1>
+
+        <!-- Sub-text -->
+        <p class="hero-sub">
+          No servers. No credit cards. No experience needed. 
+          Learn how to publish your first website online in under 5 minutes — 
+          with just drag and drop.
+        </p>
+
+        <!-- Call to action buttons -->
+        <div class="hero-ctas">
+          <a href="#tutorial" class="btn btn-primary">
+            🚀 Start Hosting
+          </a>
+          <a href="#why" class="btn btn-secondary">
+            Learn More →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       WHY USE NETLIFY
+  ============================================================ -->
+  <section id="why" aria-labelledby="why-title">
+    <div class="container">
+      <div class="reveal text-center" style="max-width:600px; margin:0 auto 3rem;">
+        <p class="section-label">⚡ Why Netlify?</p>
+        <h2 id="why-title" class="section-title">Everything a Beginner Needs</h2>
+        <p class="section-sub mx-auto">
+          Netlify is purpose-built for developers who want to ship websites fast — 
+          without any complicated setup.
+        </p>
+      </div>
+
+      <!-- Feature cards grid — staggered reveal -->
+      <div class="cards-grid reveal-stagger">
+
+        <article class="feature-card">
+          <div class="card-icon">🆓</div>
+          <h3>Free Hosting</h3>
+          <p>Netlify's Starter plan gives you real, live hosting at $0. No trial period — free forever.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="card-icon">⚡</div>
+          <h3>Instant Deploy</h3>
+          <p>Drag your folder onto the dashboard and your site is live in seconds. No commands needed.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="card-icon">🔒</div>
+          <h3>Free SSL</h3>
+          <p>Every site gets HTTPS automatically. Your visitors see a padlock — trust is built in.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="card-icon">🌐</div>
+          <h3>Custom Domains</h3>
+          <p>Connect your own .com domain or use the free netlify.app subdomain out of the box.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="card-icon">🖱️</div>
+          <h3>Drag & Drop</h3>
+          <p>No terminal. No Git required. Just drag your website folder and you're done.</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="card-icon">🔄</div>
+          <h3>Easy Updates</h3>
+          <p>Made a change? Drag the folder again. Your site updates instantly with zero downtime.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       WHAT YOU NEED
+  ============================================================ -->
+  <section id="needs" style="background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);" aria-labelledby="needs-title">
+    <div class="container">
+      <div class="reveal" style="margin-bottom: 2.5rem;">
+        <p class="section-label">📋 Prerequisites</p>
+        <h2 id="needs-title" class="section-title">What You Need</h2>
+        <p class="section-sub">
+          You don't need much. Here's the short list before we dive in:
+        </p>
+      </div>
+
+      <div class="checklist reveal-stagger">
+
+        <div class="check-item">
+          <div class="check-icon" aria-hidden="true">✓</div>
+          <div>
+            <p>An HTML file (index.html)</p>
+            <small>Your website's main file. Even a single page works!</small>
+          </div>
+        </div>
+
+        <div class="check-item">
+          <div class="check-icon" aria-hidden="true">✓</div>
+          <div>
+            <p>A free Netlify account</p>
+            <small>Sign up at netlify.com — no credit card needed.</small>
+          </div>
+        </div>
+
+        <div class="check-item">
+          <div class="check-icon" aria-hidden="true">✓</div>
+          <div>
+            <p>An internet connection</p>
+            <small>That's it! You're already most of the way there.</small>
+          </div>
+        </div>
+
+        <div class="check-item">
+          <div class="check-icon" aria-hidden="true">✓</div>
+          <div>
+            <p>5 minutes of your time</p>
+            <small>Seriously — deployment is that fast with Netlify.</small>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       STEP-BY-STEP TUTORIAL
+  ============================================================ -->
+  <section id="tutorial" aria-labelledby="tutorial-title">
+    <div class="container">
+      <div class="reveal text-center" style="max-width:600px; margin:0 auto 3rem;">
+        <p class="section-label">📖 Tutorial</p>
+        <h2 id="tutorial-title" class="section-title">Deploy in 5 Steps</h2>
+        <p class="section-sub mx-auto">
+          Follow along step by step. Each one is simple — 
+          and you'll have a live site at the end!
+        </p>
+      </div>
+
+      <ol class="steps-list reveal-stagger" aria-label="Deployment tutorial steps">
+
+        <!-- STEP 1 -->
+        <li class="step-card">
+          <div class="step-badge" aria-hidden="true">1</div>
+          <div>
+            <span class="step-icon-emoji" aria-hidden="true">👤</span>
+            <h3 class="step-title">Create a Netlify Account</h3>
+            <p class="step-desc">
+              Head to <a href="https://netlify.com" target="_blank" rel="noopener noreferrer">netlify.com</a> 
+              and click <strong>Sign Up</strong>. You can use your GitHub account, GitLab, or just an email address. 
+              It's completely free — no payment info required.
+            </p>
+            <p class="step-desc mt-2">
+              Once you verify your email, you'll land on your personal Netlify dashboard. 
+              That's home base for all your sites.
+            </p>
+          </div>
+        </li>
+
+        <!-- STEP 2 -->
+        <li class="step-card">
+          <div class="step-badge" aria-hidden="true">2</div>
+          <div>
+            <span class="step-icon-emoji" aria-hidden="true">📁</span>
+            <h3 class="step-title">Prepare Your Website Files</h3>
+            <p class="step-desc">
+              Make sure all your website files are inside a single folder on your computer. 
+              Netlify will upload the whole folder at once.
+            </p>
+
+            <!-- Example file structure with copy button -->
+            <div class="code-block" aria-label="Example website file structure">
+              <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">📋 Copy</button>
+my-website/
+├── index.html    ← Required! Your main page
+├── style.css     ← Optional: your styles
+└── script.js     ← Optional: your scripts</div>
+
+            <p class="step-desc mt-2">
+              ⚠️ <strong>Important:</strong> Your folder <em>must</em> contain a file named 
+              <code style="background:var(--bg-code); padding:0.1em 0.4em; border-radius:4px; font-size:0.88em;">index.html</code> — 
+              this is the file browsers load first.
+            </p>
+          </div>
+        </li>
+
+        <!-- STEP 3 -->
+        <li class="step-card">
+          <div class="step-badge" aria-hidden="true">3</div>
+          <div>
+            <span class="step-icon-emoji" aria-hidden="true">🖥️</span>
+            <h3 class="step-title">Open the Netlify Dashboard</h3>
+            <p class="step-desc">
+              After logging in, you'll see your Netlify dashboard. 
+              Scroll down until you see a big drop zone that reads:
+            </p>
+
+            <div class="code-block" aria-label="Netlify drop zone text">
+              <button class="copy-btn" onclick="copyCode(this)" aria-label="Copy code">📋 Copy</button>
+Want to deploy a new site without connecting to Git?
+Drag and drop your site output folder here</div>
+
+            <p class="step-desc mt-2">
+              That's where the magic happens. Keep this tab open and find your folder.
+            </p>
+          </div>
+        </li>
+
+        <!-- STEP 4 -->
+        <li class="step-card">
+          <div class="step-badge" aria-hidden="true">4</div>
+          <div>
+            <span class="step-icon-emoji" aria-hidden="true">🖱️</span>
+            <h3 class="step-title">Drag & Drop Your Folder</h3>
+            <p class="step-desc">
+              Open your file manager (Finder on Mac, File Explorer on Windows), 
+              find your website folder, then <strong>drag the entire folder</strong> 
+              onto the Netlify dashboard drop zone.
+            </p>
+            <p class="step-desc mt-2">
+              Netlify will show a progress bar and start uploading your files. 
+              This usually takes just a few seconds!
+            </p>
+            <p class="step-desc mt-2">
+              💡 <strong>Tip:</strong> Make sure you're dragging the <em>folder</em>, 
+              not just the individual files inside it.
+            </p>
+          </div>
+        </li>
+
+        <!-- STEP 5 -->
+        <li class="step-card">
+          <div class="step-badge" aria-hidden="true">5</div>
+          <div>
+            <span class="step-icon-emoji" aria-hidden="true">🎉</span>
+            <h3 class="step-title">Your Website Is Live!</h3>
+            <p class="step-desc">
+              As soon as the upload finishes, Netlify gives you a unique URL for your site. 
+              It looks something like this:
+            </p>
+
+            <!-- Example live URL -->
+            <div class="live-url" aria-label="Example Netlify URL">
+              🌐 <strong>amazing-site-abc123.netlify.app</strong>
+            </div>
+
+            <p class="step-desc mt-2">
+              Click the link and your website will open in the browser — live on the real internet! 
+              Share it with anyone in the world. 🌍
+            </p>
+            <p class="step-desc mt-2">
+              To update your site, simply drag your folder again. 
+              Netlify keeps all your previous versions too.
+            </p>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       COMMON MISTAKES
+  ============================================================ -->
+  <section id="mistakes" style="background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);" aria-labelledby="mistakes-title">
+    <div class="container">
+      <div class="reveal" style="margin-bottom: 2.5rem;">
+        <p class="section-label">⚠️ Watch Out</p>
+        <h2 id="mistakes-title" class="section-title">Common Beginner Mistakes</h2>
+        <p class="section-sub">
+          Don't panic if something goes wrong. These are the most common slip-ups — and how to fix them fast.
+        </p>
+      </div>
+
+      <div class="accordion reveal-stagger" role="list">
+
+        <div class="accordion-item" role="listitem">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)" aria-expanded="false">
+            <span class="icon-wrap">
+              <span class="warn-icon" aria-hidden="true">⚠️</span>
+              Missing index.html file
+            </span>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              Netlify needs a file called <strong>index.html</strong> (lowercase, exact spelling) in the root of your folder. 
+              This is the file that browsers open first. If it's missing or misnamed (like <em>Index.HTML</em> or <em>homepage.html</em>), 
+              visitors will see a "Page Not Found" error. Rename your main file to exactly <code>index.html</code> and re-upload.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" role="listitem">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)" aria-expanded="false">
+            <span class="icon-wrap">
+              <span class="warn-icon" aria-hidden="true">🔗</span>
+              Broken file paths
+            </span>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              If your CSS or images aren't loading, check your file paths in HTML. 
+              Use relative paths like <code>./style.css</code> or <code>images/photo.jpg</code> — 
+              never absolute paths like <code>C:\Users\You\Documents\style.css</code>. 
+              Those only work on your own computer and will break on any server.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" role="listitem">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)" aria-expanded="false">
+            <span class="icon-wrap">
+              <span class="warn-icon" aria-hidden="true">📂</span>
+              Uploading the wrong folder
+            </span>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              Drag the folder that <em>contains</em> your files — not a parent folder or just individual files. 
+              For example, if your project is in <code>Desktop/my-website/</code>, drag the <code>my-website</code> folder. 
+              If you drag a parent folder by accident, Netlify might not find your <code>index.html</code> in the expected location.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" role="listitem">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)" aria-expanded="false">
+            <span class="icon-wrap">
+              <span class="warn-icon" aria-hidden="true">🎨</span>
+              Missing CSS link in HTML
+            </span>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              Your CSS file is uploaded but the styles aren't showing? Check that you've linked it properly in your HTML. 
+              Inside your <code>&lt;head&gt;</code> tag you need: 
+              <code>&lt;link rel="stylesheet" href="style.css"&gt;</code>. 
+              Make sure the filename matches exactly — including capitalisation.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FAQ SECTION
+  ============================================================ -->
+  <section id="faq" aria-labelledby="faq-title">
+    <div class="container">
+      <div class="reveal text-center" style="max-width:560px; margin:0 auto 3rem;">
+        <p class="section-label">❓ FAQ</p>
+        <h2 id="faq-title" class="section-title">Frequently Asked Questions</h2>
+        <p class="section-sub mx-auto">
+          Still have questions? These are the ones beginners ask most.
+        </p>
+      </div>
+
+      <div class="accordion reveal-stagger" style="max-width: 760px; margin: 0 auto;" role="list">
+
+        <div class="accordion-item" role="listitem">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)" aria-expanded="false">
+            <span class="icon-wrap">
+              <span class="faq-icon" aria-hidden="true">💰</span>
+              Is Netlify really free?
+            </span>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              Yes! Netlify's Starter (free) plan includes hosting for unlimited personal projects, 
+              a free <strong>.netlify.app</strong> subdomain, automatic HTTPS, and 100GB of bandwidth per month. 
+              That's more than enough for most beginner sites and small projects. 
+              Paid plans unlock team features and higher limits.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" role="listitem">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)" aria-expanded="false">
+            <span class="icon-wrap">
+              <span class="faq-icon" aria-hidden="true">🧑‍💻</span>
+              Do I need coding experience?
+            </span>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              Not at all — for the drag-and-drop method! You just need an HTML file on your computer. 
+              If you've never written HTML before, even a simple text editor will do. 
+              Start with a file that says <code>&lt;h1&gt;Hello World&lt;/h1&gt;</code> and deploy it. 
+              Then build from there!
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" role="listitem">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)" aria-expanded="false">
+            <span class="icon-wrap">
+              <span class="faq-icon" aria-hidden="true">🌐</span>
+              Can I use a custom domain?
+            </span>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              Yes! Once your site is live, go to <strong>Site settings → Domain management</strong> in Netlify. 
+              You can add a custom domain you already own (like <em>yourname.com</em>) and Netlify will 
+              guide you through the DNS setup. If you don't have a domain yet, 
+              your free <em>yoursitename.netlify.app</em> URL works perfectly.
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item" role="listitem">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)" aria-expanded="false">
+            <span class="icon-wrap">
+              <span class="faq-icon" aria-hidden="true">🔄</span>
+              Can I update my site after deploying?
+            </span>
+            <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-body">
+            <div class="accordion-body-inner">
+              Absolutely. Make your changes in your local files, then drag and drop the updated folder 
+              onto Netlify's dashboard again. The new version goes live instantly. 
+              Netlify also keeps a history of all your deploys — so you can roll back to a previous version 
+              with one click if anything breaks.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FINAL CTA / SUCCESS SECTION
+  ============================================================ -->
+  <section id="final" aria-labelledby="final-title">
+    <!-- Confetti animation container -->
+    <div class="confetti-wrap" id="confetti-wrap" aria-hidden="true"></div>
+
+    <div class="container">
+      <div class="success-card reveal">
+        <!-- Animated checkmark -->
+        <div class="success-checkmark" aria-hidden="true">🎉</div>
+
+        <p class="section-label" style="color:rgba(255,255,255,0.75); background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.3); margin: 0 auto 1.25rem;">
+          ✅ You're Ready
+        </p>
+
+        <h2 id="final-title" class="section-title">
+          Your Website Is Now Live!
+        </h2>
+        <p class="section-sub">
+          You've learned everything you need to host a website for free with Netlify. 
+          Go build something amazing and share it with the world. 
+          Every expert was once a beginner — this is step one.
+        </p>
+
+        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+          <a href="https://app.netlify.com/signup" target="_blank" rel="noopener noreferrer" class="btn btn-white">
+            🚀 Deploy My Site Now
+          </a>
+          <a href="#tutorial" class="btn" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.35);">
+            ↑ Read Tutorial Again
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+
+        <!-- Brand -->
+        <div class="footer-brand">
+          <a href="#" class="nav-logo" aria-label="NetGuide home">Net<span>Guide</span></a>
+          <p>
+            A beginner-friendly guide to hosting websites for free. 
+            Built with plain HTML, CSS, and JavaScript — 
+            just like your first project!
+          </p>
+        </div>
+
+        <!-- Quick links -->
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#why">Why Netlify</a></li>
+            <li><a href="#needs">What You Need</a></li>
+            <li><a href="#tutorial">Tutorial</a></li>
+            <li><a href="#mistakes">Common Mistakes</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+
+        <!-- Resources -->
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="https://netlify.com" target="_blank" rel="noopener noreferrer">Netlify.com ↗</a></li>
+            <li><a href="https://developer.mozilla.org/en-US/docs/Learn" target="_blank" rel="noopener noreferrer">MDN Web Docs ↗</a></li>
+            <li><a href="https://www.freecodecamp.org" target="_blank" rel="noopener noreferrer">freeCodeCamp ↗</a></li>
+            <li><a href="https://www.w3schools.com" target="_blank" rel="noopener noreferrer">W3Schools ↗</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 NetGuide. Made with ❤️ for beginners everywhere.</p>
+        <p>Not affiliated with Netlify, Inc.</p>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+       All vanilla JS — no libraries needed!
+  ============================================================ -->
+  <script>
+    // ============================================================
+    // 1. DARK MODE TOGGLE
+    //    Saves the user's preference in localStorage so it persists
+    //    between visits.
+    // ============================================================
+    const themeToggle = document.getElementById('theme-toggle');
+    const html        = document.documentElement;
+
+    // Check for saved preference, or use system preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      html.setAttribute('data-theme', 'dark');
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    });
+
+
+    // ============================================================
+    // 2. MOBILE HAMBURGER MENU
+    // ============================================================
+    const hamburger  = document.getElementById('hamburger');
+    const mobileNav  = document.getElementById('mobile-nav');
+
+    hamburger.addEventListener('click', () => {
+      const isOpen = hamburger.classList.toggle('open');
+      mobileNav.classList.toggle('open', isOpen);
+      hamburger.setAttribute('aria-expanded', isOpen);
+    });
+
+    // Close mobile menu when a link is clicked
+    mobileNav.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileNav.classList.remove('open');
+        hamburger.setAttribute('aria-expanded', 'false');
+      });
+    });
+
+
+    // ============================================================
+    // 3. SCROLL PROGRESS BAR
+    //    Shows how far down the page the user has scrolled.
+    // ============================================================
+    const progressBar = document.getElementById('progress-bar');
+
+    window.addEventListener('scroll', () => {
+      const scrollTop    = document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const progress     = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+      progressBar.style.width = progress + '%';
+    });
+
+
+    // ============================================================
+    // 4. ACTIVE NAV LINK HIGHLIGHTING
+    //    Uses IntersectionObserver to track which section is visible.
+    // ============================================================
+    const sections  = document.querySelectorAll('section[id]');
+    const navLinks  = document.querySelectorAll('.nav-links a');
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+          });
+        }
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+
+    sections.forEach(section => sectionObserver.observe(section));
+
+
+    // ============================================================
+    // 5. SCROLL REVEAL ANIMATIONS
+    //    Watches for elements with .reveal or .reveal-stagger class
+    //    and adds .visible when they enter the viewport.
+    // ============================================================
+    const revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // Once revealed, stop watching (one-time animation)
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    revealEls.forEach(el => revealObserver.observe(el));
+
+
+    // ============================================================
+    // 6. ACCORDION TOGGLE
+    //    Opens/closes accordion items with smooth height animation.
+    // ============================================================
+    function toggleAccordion(trigger) {
+      const item = trigger.closest('.accordion-item');
+      const body = item.querySelector('.accordion-body');
+      const inner = body.querySelector('.accordion-body-inner');
+      const isOpen = item.classList.contains('open');
+
+      // Close all other open items first
+      document.querySelectorAll('.accordion-item.open').forEach(openItem => {
+        if (openItem !== item) {
+          openItem.classList.remove('open');
+          openItem.querySelector('.accordion-body').style.maxHeight = '0';
+          openItem.querySelector('.accordion-trigger').setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Toggle the clicked item
+      if (isOpen) {
+        item.classList.remove('open');
+        body.style.maxHeight = '0';
+        trigger.setAttribute('aria-expanded', 'false');
+      } else {
+        item.classList.add('open');
+        body.style.maxHeight = inner.scrollHeight + 'px';
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+
+    // ============================================================
+    // 7. COPY CODE BUTTON
+    //    Copies code block content and shows a success message.
+    // ============================================================
+    function copyCode(btn) {
+      // Get the parent code block text (excluding the button text)
+      const codeBlock = btn.closest('.code-block');
+      const text = codeBlock.innerText.replace('📋 Copy', '').replace('✅ Copied!', '').trim();
+
+      navigator.clipboard.writeText(text).then(() => {
+        // Show success state
+        btn.textContent = '✅ Copied!';
+        btn.classList.add('copied');
+
+        // Reset after 2 seconds
+        setTimeout(() => {
+          btn.textContent = '📋 Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // Fallback for browsers without clipboard API
+        btn.textContent = '❌ Failed';
+        setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
+      });
+    }
+
+
+    // ============================================================
+    // 8. CONFETTI ANIMATION
+    //    Creates colorful floating dots in the final CTA section.
+    //    Runs once when the section becomes visible.
+    // ============================================================
+    const confettiWrap = document.getElementById('confetti-wrap');
+    const confettiColors = ['#fff', '#a5b8fd', '#fbbf24', '#34d399', '#fb7185', '#60a5fa'];
+    let confettiCreated = false;
+
+    function createConfetti() {
+      if (confettiCreated) return;
+      confettiCreated = true;
+
+      // Create 30 confetti particles
+      for (let i = 0; i < 30; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'confetti-dot';
+        dot.style.cssText = `
+          left: ${Math.random() * 100}%;
+          top: ${-20 - Math.random() * 40}px;
+          background: ${confettiColors[Math.floor(Math.random() * confettiColors.length)]};
+          width: ${5 + Math.random() * 8}px;
+          height: ${5 + Math.random() * 8}px;
+          animation-duration: ${4 + Math.random() * 5}s;
+          animation-delay: ${Math.random() * 3}s;
+          border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+        `;
+        confettiWrap.appendChild(dot);
+      }
+    }
+
+    // Observe the final section to trigger confetti
+    const finalSection = document.getElementById('final');
+    const finalObserver = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) createConfetti();
+    }, { threshold: 0.3 });
+
+    finalObserver.observe(finalSection);
+
+
+    // ============================================================
+    // 9. SMOOTH SCROLL (polyfill for older browsers)
+    //    Modern browsers handle this via CSS scroll-behavior: smooth,
+    //    but this JS version adds support for older Safari.
+    // ============================================================
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+  </script>
+</body>
+</html>
